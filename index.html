@@ -1,4 +1,3 @@
-<file_action file_path="index.html" action="write">
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -34,6 +33,9 @@
         .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #0f172a; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-top: 6px; }
         .btn:active { background: var(--accent-hover); }
         
+        .btn-sec { background: transparent; border: 1px solid var(--border); color: var(--text-main); font-size: 0.8rem; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+        .btn-sec:hover { background: rgba(255,255,255,0.05); }
+
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         
@@ -55,7 +57,6 @@
         .log-analysis.empty { background: rgba(148, 163, 184, 0.08); border-left-color: var(--text-muted); color: var(--text-muted); font-style: italic; }
         
         .btn-del { background: transparent; border: none; color: var(--danger); font-size: 1.1rem; cursor: pointer; padding: 0 4px; }
-        
         .month-selector { background: #0f172a; color: var(--text-main); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
     </style>
 </head>
@@ -162,6 +163,16 @@
             </form>
         </div>
 
+        <!-- YEDEKLEME ALANI -->
+        <div class="card">
+            <div class="card-title">💾 Veri Yedekleme</div>
+            <div class="grid-2">
+                <button class="btn-sec" onclick="exportBackup()">📥 Yedeği İndir</button>
+                <button class="btn-sec" onclick="document.getElementById('importFile').click()">📤 Yedek Yükle</button>
+                <input type="file" id="importFile" style="display:none" accept=".json" onchange="importBackup(event)">
+            </div>
+        </div>
+
         <!-- GEÇMİŞ KAYITLAR -->
         <div class="card-title" style="margin: 16px 4px 8px;">📋 Yakıt ve İki Kayıt Arası İstatistikler</div>
         <div id="logsContainer"></div>
@@ -187,7 +198,6 @@
 
             const logs = getLogs();
             logs.push({ id: Date.now(), date, km, liters, price });
-            // KM'ye göre büyükten küçüğe sırala (en son tarih/km üstte)
             logs.sort((a, b) => b.km - a.km);
             
             saveLogs(logs);
@@ -206,6 +216,45 @@
             render();
         }
 
+        function exportBackup() {
+            const logs = getLogs();
+            if (logs.length === 0) {
+                alert('Yedeklenecek kayıt bulunamadı.');
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs, null, 2));
+            const downloadAnchor = document.createElement('a');
+            const today = new Date().toISOString().slice(0,10);
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `motor_yakit_yedek_${today}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importBackup(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const importedLogs = JSON.parse(event.target.result);
+                    if (Array.isArray(importedLogs)) {
+                        saveLogs(importedLogs);
+                        alert('Yedek başarıyla yüklendi!');
+                        populateMonthFilter();
+                        render();
+                    } else {
+                        alert('Geçersiz yedek dosyası formatı.');
+                    }
+                } catch (err) {
+                    alert('Hata: Dosya okunamadı veya bozuk.');
+                }
+            };
+            reader.readAsText(file);
+        }
+
         function populateMonthFilter() {
             const logs = getLogs();
             const select = document.getElementById('monthFilter');
@@ -215,7 +264,7 @@
             const months = new Set();
             logs.forEach(log => {
                 if (log.date) {
-                    const m = log.date.substring(0, 7); // YYYY-MM
+                    const m = log.date.substring(0, 7);
                     months.add(m);
                 }
             });
@@ -231,7 +280,6 @@
             sortedMonths.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m;
-                // Ay ismini Türkçe biçimlendir
                 const [year, month] = m.split('-');
                 const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
                 opt.innerText = `${monthNames[parseInt(month)-1]} ${year}`;
@@ -248,14 +296,12 @@
             const container = document.getElementById('logsContainer');
             container.innerHTML = '';
 
-            // 1. GENEL İSTATİSTİKLER HESAPLAMA
             let totalKmDone = 0;
             let totalLiters = 0;
             let totalCost = 0;
 
             if (logs.length > 1) {
                 totalKmDone = logs[0].km - logs[logs.length - 1].km;
-                // En son depoyu doldurduğumuz ama henüz bitirmediğimiz için ilk depo hariç yakıtı topluyoruz
                 for (let i = 0; i < logs.length - 1; i++) {
                     totalLiters += logs[i].liters;
                     totalCost += logs[i].price;
@@ -276,7 +322,6 @@
                 document.getElementById('overallCostPerKm').innerText = '0.00 ₺';
             }
 
-            // 2. AYLIK İSTATİSTİKLER HESAPLAMA
             const selectedMonth = document.getElementById('monthFilter').value;
             const monthLogs = logs.filter(l => l.date && l.date.startsWith(selectedMonth));
 
@@ -291,7 +336,6 @@
                 mLiters += l.liters;
             });
 
-            // Aylık yapılan KM ve tüketim hesabı (Seçili ay içindeki kayıtlar arasındaki KM farkları)
             monthLogs.forEach(l => {
                 const index = logs.findIndex(orig => orig.id === l.id);
                 if (index < logs.length - 1) {
@@ -319,7 +363,6 @@
                 document.getElementById('monthCostPerKm').innerText = '0.00 ₺';
             }
 
-            // 3. LİSTE VE İKİ KAYIT ARASI DETAYLI HESAPLAR
             if (logs.length === 0) {
                 container.innerHTML = '<div style="text-align:center; color: var(--text-muted); padding: 20px;">Henüz yakıt kaydı bulunmuyor.</div>';
                 return;
@@ -335,7 +378,6 @@
                     if (kmDiff > 0) {
                         const consL100 = (log.liters / kmDiff) * 100;
                         const costPerKm = log.price / kmDiff;
-                        const unitPrice = log.price / log.liters;
 
                         analysisHtml = `
                             <div class="log-analysis">
