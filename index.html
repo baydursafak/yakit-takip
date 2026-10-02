@@ -1,0 +1,380 @@
+<file_action file_path="index.html" action="write">
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Yakıt & KM Takibi</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 12px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; padding-bottom: 30px; }
+        h1 { font-size: 1.3rem; text-align: center; margin: 10px 0 16px; color: var(--accent); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        .card { background: var(--card-bg); padding: 14px; border-radius: 12px; margin-bottom: 14px; border: 1px solid var(--border); }
+        .card-title { font-size: 0.95rem; font-weight: 600; color: var(--accent); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+        input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; color: #fff; font-size: 0.95rem; }
+        input:focus { outline: none; border-color: var(--accent); }
+        
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; background: var(--accent); color: #0f172a; font-weight: bold; font-size: 0.95rem; cursor: pointer; margin-top: 6px; }
+        .btn:active { background: var(--accent-hover); }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        
+        .stat-box { background: rgba(15, 23, 42, 0.6); padding: 10px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .stat-box .title { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-box .value { font-size: 1rem; font-weight: bold; color: var(--accent); margin-top: 4px; }
+        .stat-box .sub-value { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        .log-item { background: var(--card-bg); padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px; }
+        .log-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 8px; }
+        .log-date { font-size: 0.85rem; font-weight: 600; color: #fff; }
+        .log-km-badge { font-size: 0.75rem; background: #0f172a; padding: 2px 8px; border-radius: 6px; color: var(--accent); border: 1px solid var(--border); }
+        
+        .log-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem; margin-bottom: 8px; }
+        .log-detail-item { color: var(--text-muted); }
+        .log-detail-item span { color: var(--text-main); font-weight: 600; }
+        
+        .log-analysis { background: rgba(56, 189, 248, 0.08); border-left: 3px solid var(--accent); padding: 6px 10px; border-radius: 0 6px 6px 0; font-size: 0.78rem; display: flex; justify-content: space-between; }
+        .log-analysis.empty { background: rgba(148, 163, 184, 0.08); border-left-color: var(--text-muted); color: var(--text-muted); font-style: italic; }
+        
+        .btn-del { background: transparent; border: none; color: var(--danger); font-size: 1.1rem; cursor: pointer; padding: 0 4px; }
+        
+        .month-selector { background: #0f172a; color: var(--text-main); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛵 Motor Yakıt & Raporlama</h1>
+        
+        <!-- GENEL İSTATİSTİKLER -->
+        <div class="card">
+            <div class="card-title">📊 Genel Özet</div>
+            <div class="grid-2" style="margin-bottom: 8px;">
+                <div class="stat-box">
+                    <div class="title">Ort. Tüketim</div>
+                    <div class="value" id="overallAvgCons">0.00</div>
+                    <div class="sub-value">Lt / 100 KM</div>
+                </div>
+                <div class="stat-box">
+                    <div class="title">Ort. KM Maliyeti</div>
+                    <div class="value" id="overallCostPerKm">0.00 ₺</div>
+                    <div class="sub-value">₺ / KM</div>
+                </div>
+            </div>
+            <div class="grid-3">
+                <div class="stat-box">
+                    <div class="title">Toplam KM</div>
+                    <div class="value" id="totalKmDone">0</div>
+                    <div class="sub-value">Mesafe</div>
+                </div>
+                <div class="stat-box">
+                    <div class="title">Toplam Yakıt</div>
+                    <div class="value" id="totalLiters">0.0</div>
+                    <div class="sub-value">Litre</div>
+                </div>
+                <div class="stat-box">
+                    <div class="title">Toplam Harcama</div>
+                    <div class="value" id="totalCost">0 ₺</div>
+                    <div class="sub-value">Tutar</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AYLIK RAPORLAMA -->
+        <div class="card">
+            <div class="card-title">
+                <span>📅 Aylık Rapor</span>
+                <select id="monthFilter" class="month-selector" onchange="render()"></select>
+            </div>
+            <div class="grid-3" style="margin-bottom: 8px;">
+                <div class="stat-box">
+                    <div class="title">Aylık KM</div>
+                    <div class="value" id="monthKm">0</div>
+                    <div class="sub-value">Mesafe</div>
+                </div>
+                <div class="stat-box">
+                    <div class="title">Aylık Harcama</div>
+                    <div class="value" id="monthCost">0 ₺</div>
+                    <div class="sub-value">Tutar</div>
+                </div>
+                <div class="stat-box">
+                    <div class="title">Aylık Yakıt</div>
+                    <div class="value" id="monthLiters">0.0</div>
+                    <div class="sub-value">Litre</div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="stat-box">
+                    <div class="title">Aylık Ort. Tüketim</div>
+                    <div class="value" id="monthAvgCons">0.00</div>
+                    <div class="sub-value">Lt / 100 KM</div>
+                </div>
+                <div class="stat-box">
+                    <div class="title">Aylık KM Maliyeti</div>
+                    <div class="value" id="monthCostPerKm">0.00 ₺</div>
+                    <div class="sub-value">₺ / KM</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KAYIT FORMU -->
+        <div class="card">
+            <div class="card-title">➕ Yeni Yakıt Ekle</div>
+            <form id="fuelForm">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="date">Tarih</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="km">Mevcut Sayaç (KM)</label>
+                        <input type="number" id="km" placeholder="Örn: 4250" required>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="liters">Alınan Benzin (Litre)</label>
+                        <input type="number" step="0.01" id="liters" placeholder="Örn: 4.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Toplam Tutar (₺)</label>
+                        <input type="number" step="0.01" id="price" placeholder="Örn: 215.00" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn">Kaydı Kaydet</button>
+            </form>
+        </div>
+
+        <!-- GEÇMİŞ KAYITLAR -->
+        <div class="card-title" style="margin: 16px 4px 8px;">📋 Yakıt ve İki Kayıt Arası İstatistikler</div>
+        <div id="logsContainer"></div>
+    </div>
+
+    <script>
+        document.getElementById('date').valueAsDate = new Date();
+        
+        function getLogs() {
+            return JSON.parse(localStorage.getItem('motor_fuel_logs') || '[]');
+        }
+
+        function saveLogs(logs) {
+            localStorage.setItem('motor_fuel_logs', JSON.stringify(logs));
+        }
+
+        function addLog(e) {
+            e.preventDefault();
+            const date = document.getElementById('date').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const liters = parseFloat(document.getElementById('liters').value);
+            const price = parseFloat(document.getElementById('price').value);
+
+            const logs = getLogs();
+            logs.push({ id: Date.now(), date, km, liters, price });
+            // KM'ye göre büyükten küçüğe sırala (en son tarih/km üstte)
+            logs.sort((a, b) => b.km - a.km);
+            
+            saveLogs(logs);
+            document.getElementById('fuelForm').reset();
+            document.getElementById('date').valueAsDate = new Date();
+            populateMonthFilter();
+            render();
+        }
+
+        function deleteLog(id) {
+            if (!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+            let logs = getLogs();
+            logs = logs.filter(log => log.id !== id);
+            saveLogs(logs);
+            populateMonthFilter();
+            render();
+        }
+
+        function populateMonthFilter() {
+            const logs = getLogs();
+            const select = document.getElementById('monthFilter');
+            const selectedVal = select.value;
+            select.innerHTML = '';
+
+            const months = new Set();
+            logs.forEach(log => {
+                if (log.date) {
+                    const m = log.date.substring(0, 7); // YYYY-MM
+                    months.add(m);
+                }
+            });
+
+            const sortedMonths = Array.from(months).sort().reverse();
+            
+            if (sortedMonths.length === 0) {
+                const currentMonth = new Date().toISOString().substring(0, 7);
+                select.innerHTML = `<option value="${currentMonth}">${currentMonth}</option>`;
+                return;
+            }
+
+            sortedMonths.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m;
+                // Ay ismini Türkçe biçimlendir
+                const [year, month] = m.split('-');
+                const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                opt.innerText = `${monthNames[parseInt(month)-1]} ${year}`;
+                select.appendChild(opt);
+            });
+
+            if (selectedVal && sortedMonths.includes(selectedVal)) {
+                select.value = selectedVal;
+            }
+        }
+
+        function render() {
+            const logs = getLogs();
+            const container = document.getElementById('logsContainer');
+            container.innerHTML = '';
+
+            // 1. GENEL İSTATİSTİKLER HESAPLAMA
+            let totalKmDone = 0;
+            let totalLiters = 0;
+            let totalCost = 0;
+
+            if (logs.length > 1) {
+                totalKmDone = logs[0].km - logs[logs.length - 1].km;
+                // En son depoyu doldurduğumuz ama henüz bitirmediğimiz için ilk depo hariç yakıtı topluyoruz
+                for (let i = 0; i < logs.length - 1; i++) {
+                    totalLiters += logs[i].liters;
+                    totalCost += logs[i].price;
+                }
+            }
+
+            document.getElementById('totalKmDone').innerText = totalKmDone;
+            document.getElementById('totalLiters').innerText = totalLiters.toFixed(1);
+            document.getElementById('totalCost').innerText = totalCost.toFixed(0) + ' ₺';
+
+            if (totalKmDone > 0 && totalLiters > 0) {
+                const avgCons = (totalLiters / totalKmDone) * 100;
+                const costKm = totalCost / totalKmDone;
+                document.getElementById('overallAvgCons').innerText = avgCons.toFixed(2);
+                document.getElementById('overallCostPerKm').innerText = costKm.toFixed(2) + ' ₺';
+            } else {
+                document.getElementById('overallAvgCons').innerText = '0.00';
+                document.getElementById('overallCostPerKm').innerText = '0.00 ₺';
+            }
+
+            // 2. AYLIK İSTATİSTİKLER HESAPLAMA
+            const selectedMonth = document.getElementById('monthFilter').value;
+            const monthLogs = logs.filter(l => l.date && l.date.startsWith(selectedMonth));
+
+            let mCost = 0;
+            let mLiters = 0;
+            let mKmDone = 0;
+            let mLitersForCons = 0;
+            let mCostForCons = 0;
+
+            monthLogs.forEach(l => {
+                mCost += l.price;
+                mLiters += l.liters;
+            });
+
+            // Aylık yapılan KM ve tüketim hesabı (Seçili ay içindeki kayıtlar arasındaki KM farkları)
+            monthLogs.forEach(l => {
+                const index = logs.findIndex(orig => orig.id === l.id);
+                if (index < logs.length - 1) {
+                    const prevLog = logs[index + 1];
+                    const kmDiff = l.km - prevLog.km;
+                    if (kmDiff > 0) {
+                        mKmDone += kmDiff;
+                        mLitersForCons += l.liters;
+                        mCostForCons += l.price;
+                    }
+                }
+            });
+
+            document.getElementById('monthKm').innerText = mKmDone;
+            document.getElementById('monthCost').innerText = mCost.toFixed(0) + ' ₺';
+            document.getElementById('monthLiters').innerText = mLiters.toFixed(1);
+
+            if (mKmDone > 0 && mLitersForCons > 0) {
+                const mAvgCons = (mLitersForCons / mKmDone) * 100;
+                const mCostKm = mCostForCons / mKmDone;
+                document.getElementById('monthAvgCons').innerText = mAvgCons.toFixed(2);
+                document.getElementById('monthCostPerKm').innerText = mCostKm.toFixed(2) + ' ₺';
+            } else {
+                document.getElementById('monthAvgCons').innerText = '0.00';
+                document.getElementById('monthCostPerKm').innerText = '0.00 ₺';
+            }
+
+            // 3. LİSTE VE İKİ KAYIT ARASI DETAYLI HESAPLAR
+            if (logs.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color: var(--text-muted); padding: 20px;">Henüz yakıt kaydı bulunmuyor.</div>';
+                return;
+            }
+
+            logs.forEach((log, index) => {
+                let analysisHtml = '';
+
+                if (index < logs.length - 1) {
+                    const prevLog = logs[index + 1];
+                    const kmDiff = log.km - prevLog.km;
+                    
+                    if (kmDiff > 0) {
+                        const consL100 = (log.liters / kmDiff) * 100;
+                        const costPerKm = log.price / kmDiff;
+                        const unitPrice = log.price / log.liters;
+
+                        analysisHtml = `
+                            <div class="log-analysis">
+                                <div><strong>Son Sürüş:</strong> +${kmDiff} KM</div>
+                                <div><strong>Tüketim:</strong> ${consL100.toFixed(2)} L/100km</div>
+                                <div><strong>Maliyet:</strong> <span style="color: var(--accent); font-weight:bold;">${costPerKm.toFixed(2)} ₺/KM</span></div>
+                            </div>
+                        `;
+                    } else {
+                        analysisHtml = `<div class="log-analysis empty">Km değerinde artış tespit edilemedi.</div>`;
+                    }
+                } else {
+                    analysisHtml = `<div class="log-analysis empty">🏁 İlk kayıt (Başlangıç noktası - tüketim bir sonraki depoda hesaplanır)</div>`;
+                }
+
+                const unitPrice = (log.price / log.liters).toFixed(2);
+
+                const div = document.createElement('div');
+                div.className = 'log-item';
+                div.innerHTML = `
+                    <div class="log-header">
+                        <div class="log-date">📅 ${log.date}</div>
+                        <div class="log-km-badge">📍 ${log.km} KM</div>
+                        <button class="btn-del" onclick="deleteLog(${log.id})" title="Sil">✕</button>
+                    </div>
+                    <div class="log-details">
+                        <div class="log-detail-item">Alınan Yakıt: <span>${log.liters} Litre</span></div>
+                        <div class="log-detail-item">Ödenen Tutar: <span>${log.price} ₺</span></div>
+                        <div class="log-detail-item">Litre Fiyatı: <span>${unitPrice} ₺/L</span></div>
+                    </div>
+                    ${analysisHtml}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        document.getElementById('fuelForm').addEventListener('submit', addLog);
+        populateMonthFilter();
+        render();
+    </script>
+</body>
+</html>
